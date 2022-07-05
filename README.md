@@ -17,3 +17,5 @@ A tiny wireless hardware platform to research IMU(6-axis) algorithm.
 
 ## [3D Printing Model](./model_3d/README.md)
 
+## Coordinate Definition
+IMU xyz
