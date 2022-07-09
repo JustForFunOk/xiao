@@ -55,7 +55,9 @@ void loop() {
 
     // while the central is still connected to peripheral:
   while (central.connected()) {
+    // Query if the characteristic value has been written by another Bluetooth® Low Energy device.
     if (switchCharacteristic.written()) {
+      // Query the current value of the specified BLECharacteristic.
       if (switchCharacteristic.value()) {
         Serial.println("LED on");
         digitalWrite(ledPin, LOW); // changed from HIGH to LOW
