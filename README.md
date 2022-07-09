@@ -9,10 +9,17 @@ A tiny wireless hardware platform to research IMU(6-axis) algorithm.
 
 ## Prerequisite
 ### IDE && Deploy && Debug
-* [Arduino IDE](https://www.arduino.cc/en/software)
-### Library
-* [BLE Driver](https://github.com/arduino-libraries/ArduinoBLE)
-* [IMU Driver](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3)
+* Download and Install [Arduino IDE](https://www.arduino.cc/en/software)
+
+### Configure Board Manager and UART
+
+* [Setup XIAO Board in Arduino IDE](https://wiki.seeedstudio.com/XIAO_BLE/)
+
+### Install Libraries
+
+* Install [BLE Driver](https://wiki.seeedstudio.com/XIAO_BLE/)
+* Install [IMU Driver](https://wiki.seeedstudio.com/XIAO-BLE-Sense-IMU-Usage/)
+
 
 
 ## [3D Printing Model](./model_3d/README.md)
