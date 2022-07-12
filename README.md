@@ -19,6 +19,7 @@ A tiny wireless hardware platform to research IMU(6-axis) algorithm.
 
 * Install [BLE Driver](https://wiki.seeedstudio.com/XIAO_BLE/)
 * Install [IMU Driver](https://wiki.seeedstudio.com/XIAO-BLE-Sense-IMU-Usage/)
+* Install [arduino-timer](https://www.arduino.cc/reference/en/libraries/arduino-timer/)
 
 
 
