@@ -4,3 +4,6 @@
 [submodule "third_party/IMU"]
 	path = third_party/IMU
 	url = https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3
+[submodule "third_party/arduino-timer"]
+	path = third_party/arduino-timer
+	url = https://github.com/contrem/arduino-timer.git
