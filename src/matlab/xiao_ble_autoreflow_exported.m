@@ -29,7 +29,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
     
     properties (Access = private)
         BLEConnectCheckTimer = 0;
-        IsBLEConnectted = false; % BLE connect status
+        isBLEConnectted = false; % BLE connect status
         BLEList = table;
         BLEName = table;
     end
@@ -59,6 +59,10 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
 
         % Code that executes after component creation
         function startupFcn(app)
+            % Set BLE initial connection status
+            app.isBLEConnectted = false;
+            app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
+            
             % Config timer
             % Refernce: https://ww2.mathworks.cn/matlabcentral/answers/346703-how-to-use-timer-callback-in-app-designer
             % Refresh BLE device list every 5 seconds
@@ -68,18 +72,6 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             
             % Start timer
             start(app.BLEConnectCheckTimer); % stop(app.BLEConnectCheckTimer);
-        end
-
-        % Callback function
-        function toggleBLEConnectStatus(app, event)
-            if(app.IsBLEConnectted == true )
-                app.IsBLEConnectted = false;
-                app.ConnectStatusLamp.Color = [1 0 1];
-            else
-                app.IsBLEConnectted = true;
-                app.ConnectStatusLamp.Color = [0 1 0];
-            end
-                
         end
 
         % Changes arrangement of the app based on UIFigure width
@@ -115,6 +107,19 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
                 app.CenterPanel.Layout.Column = 2;
                 app.RightPanel.Layout.Row = 1;
                 app.RightPanel.Layout.Column = 3;
+            end
+        end
+
+        % Value changed function: DropDown
+        function DropDownValueChanged(app, event)
+            value = app.DropDown.Value;
+            
+            if(app.isBLEConnectted == true )
+                app.isBLEConnectted = false;
+                app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
+            else
+                app.isBLEConnectted = true;
+                app.ConnectStatusLamp.Color = [0 1 0];
             end
         end
     end
@@ -155,6 +160,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
 
             % Create ConnectStatusLamp
             app.ConnectStatusLamp = uilamp(app.LeftPanel);
+            app.ConnectStatusLamp.Tooltip = {'BLE connection status.'; 'Gray: No connection.'; 'Green: Connected.'; ''};
             app.ConnectStatusLamp.Position = [180 477 18 18];
 
             % Create RawDataTextAreaLabel
@@ -184,6 +190,8 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             % Create DropDown
             app.DropDown = uidropdown(app.LeftPanel);
             app.DropDown.Items = {'---'};
+            app.DropDown.ValueChangedFcn = createCallbackFcn(app, @DropDownValueChanged, true);
+            app.DropDown.Tooltip = {'Available bluetooth list.'; 'Auto refresh every 5s.'; 'Choos --- will disconnect device.'};
             app.DropDown.Position = [27 475 136 22];
             app.DropDown.Value = '---';
 
