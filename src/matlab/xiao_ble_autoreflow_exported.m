@@ -11,7 +11,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
         RawDataTextArea       matlab.ui.control.TextArea
         RawDataLabel          matlab.ui.control.Label
         DropDownLabel         matlab.ui.control.Label
-        DropDown              matlab.ui.control.DropDown
+        BLEDeviceDropDown     matlab.ui.control.DropDown
         CenterPanel           matlab.ui.container.Panel
         UIAxes                matlab.ui.control.UIAxes
         UIAxes2               matlab.ui.control.UIAxes
@@ -26,16 +26,17 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
         twoPanelWidth = 768;
     end
 
-    
+
     properties (Access = private)
         BLEConnectCheckTimer = 0;
         isBLEConnectted = false; % BLE connect status
         BLEList = table;
         BLEName = table;
+        BLEDevice = 0;
+        BLECharacteristic = 0;
     end
-    
+
     methods (Access = private)
-        
         function BLEConnectCheckTimerCallback(app, obj, event)
             % Scan bluetooth devices
             app.BLEList = blelist;
@@ -49,10 +50,15 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             app.BLEName{end+1} = '---';
             app.BLEName = sort(app.BLEName);
             % Refresh bluetooth device list in drop down items
-            app.DropDown.Items = app.BLEName;
+            app.BLEDeviceDropDown.Items = app.BLEName;
+        end
+
+        function displayCharacteristicData(app,src)
+            [data,timestamp] = read(src,'oldest');
+            disp(data);
+            disp(timestamp);
         end
     end
-    
 
     % Callbacks that handle component events
     methods (Access = private)
@@ -62,14 +68,14 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             % Set BLE initial connection status
             app.isBLEConnectted = false;
             app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
-            
+
             % Config timer
             % Refernce: https://ww2.mathworks.cn/matlabcentral/answers/346703-how-to-use-timer-callback-in-app-designer
             % Refresh BLE device list every 5 seconds
             app.BLEConnectCheckTimer = timer('Period',5,'ExecutionMode','fixedSpacing',...
                            'TasksToExecute', Inf);
             app.BLEConnectCheckTimer.TimerFcn = @app.BLEConnectCheckTimerCallback;
-            
+
             % Start timer
             start(app.BLEConnectCheckTimer); % stop(app.BLEConnectCheckTimer);
         end
@@ -110,17 +116,45 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             end
         end
 
-        % Value changed function: DropDown
-        function DropDownValueChanged(app, event)
-            value = app.DropDown.Value;
-            
-            if(app.isBLEConnectted == true )
-                app.isBLEConnectted = false;
-                app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
-            else
+        % Value changed function: BLEDeviceDropDown
+        function BLEDeviceDropDownValueChanged(app, event)
+            choosedDevice = app.BLEDeviceDropDown.Value;
+
+            if(choosedDevice == "Arduino" && app.isBLEConnectted == false)
+                stop(app.BLEConnectCheckTimer);
+
+                app.ConnectStatusLamp.Color = [0 0 1];
+
+                app.BLEDevice = ble(choosedDevice);
+                app.BLECharacteristic = characteristic(app.BLEDevice,"AAAA","19B10001-E8F2-537E-4F6C-D104768A1214");
+                % callback when receive notify of new data is ready
+                % https://ww2.mathworks.cn/matlabcentral/answers/723378-saving-data-of-command-window-from-callback-function
+                app.BLECharacteristic.DataAvailableFcn = @(obj,event)app.displayCharacteristicData(obj);
+
                 app.isBLEConnectted = true;
                 app.ConnectStatusLamp.Color = [0 1 0];
+            elseif(choosedDevice == "---" && app.isBLEConnectted == true)
+                app.ConnectStatusLamp.Color = [1 0 0];
+
+                % Disconnect BLE device
+                % ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ ble ÿÿÿÿÿÿÿÿÿ
+%                 unsubscribe(app.BLECharacteristic);
+
+                app.BLEDevice = 0;
+                app.BLECharacteristic = 0;
+                app.isBLEConnectted = false;
+                app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
+
+                start(app.BLEConnectCheckTimer);
             end
+        end
+
+        % Close request function: UIFigure
+        function UIFigureCloseRequest(app, event)
+            % Stop timer before close app
+            stop(app.BLEConnectCheckTimer);
+
+            delete(app)
         end
     end
 
@@ -135,6 +169,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             app.UIFigure.AutoResizeChildren = 'off';
             app.UIFigure.Position = [100 100 872 543];
             app.UIFigure.Name = 'MATLAB App';
+            app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @UIFigureCloseRequest, true);
             app.UIFigure.SizeChangedFcn = createCallbackFcn(app, @updateAppLayout, true);
 
             % Create GridLayout
@@ -187,13 +222,13 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             app.DropDownLabel.Position = [27 445 66 22];
             app.DropDownLabel.Text = 'Drop Down';
 
-            % Create DropDown
-            app.DropDown = uidropdown(app.LeftPanel);
-            app.DropDown.Items = {'---'};
-            app.DropDown.ValueChangedFcn = createCallbackFcn(app, @DropDownValueChanged, true);
-            app.DropDown.Tooltip = {'Available bluetooth list.'; 'Auto refresh every 5s.'; 'Choos --- will disconnect device.'};
-            app.DropDown.Position = [27 475 136 22];
-            app.DropDown.Value = '---';
+            % Create BLEDeviceDropDown
+            app.BLEDeviceDropDown = uidropdown(app.LeftPanel);
+            app.BLEDeviceDropDown.Items = {'---'};
+            app.BLEDeviceDropDown.ValueChangedFcn = createCallbackFcn(app, @BLEDeviceDropDownValueChanged, true);
+            app.BLEDeviceDropDown.Tooltip = {'Available bluetooth list.'; 'Auto refresh every 5s.'; 'Choos --- will disconnect device.'};
+            app.BLEDeviceDropDown.Position = [27 475 136 22];
+            app.BLEDeviceDropDown.Value = '---';
 
             % Create CenterPanel
             app.CenterPanel = uipanel(app.GridLayout);
