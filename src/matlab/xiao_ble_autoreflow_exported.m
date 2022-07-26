@@ -55,8 +55,11 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
 
         function displayCharacteristicData(app,src)
             [data,timestamp] = read(src,'oldest');
-            disp(data);
-            disp(timestamp);
+            app.RawDataTextArea.Value = string(data);
+
+            % display content in matlab terminal
+            % disp(data);
+            % disp(timestamp);
         end
     end
 
@@ -140,8 +143,8 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
                 % ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ ble ÿÿÿÿÿÿÿÿÿ
 %                 unsubscribe(app.BLECharacteristic);
 
-                app.BLEDevice = 0;
                 app.BLECharacteristic = 0;
+                app.BLEDevice = 0;
                 app.isBLEConnectted = false;
                 app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
 
@@ -195,7 +198,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
 
             % Create ConnectStatusLamp
             app.ConnectStatusLamp = uilamp(app.LeftPanel);
-            app.ConnectStatusLamp.Tooltip = {'BLE connection status.'; 'Gray: No connection.'; 'Green: Connected.'; ''};
+            app.ConnectStatusLamp.Tooltip = {'BLE connection status.'; 'Gray: No connection.'; 'Blue: Connecting.'; 'Green: Connected.'; 'Red: Disconnecting.'};
             app.ConnectStatusLamp.Position = [180 477 18 18];
 
             % Create RawDataTextAreaLabel
