@@ -83,9 +83,9 @@ void setup() {
   /// IMU
   // Call .begin() to configure the IMUs
   if (myIMU.begin() != 0) {
-      Serial.println("IMU Device error");
+    Serial.println("IMU Device error");
   } else {
-      Serial.println("IMU Device OK!");
+    Serial.println("IMU Device OK!");
   }
 
   /// BLE
@@ -136,7 +136,8 @@ void loop() {
       timer.tick();
     }
 
-    timer.cancel();
+    // TODO: this will disable timer after disconnect once
+    // timer.cancel();
 
     // when the central disconnects, print it out:
     Serial.print(F("Disconnected from central: "));
