@@ -3,9 +3,21 @@
 #include <Wire.h>
 #include <arduino-timer.h>
 
+/// Macros
 // Read IMU data every 10 millisecond (100Hz)
 #define IMU_RAW_FREQUENCY_HZ  100
 
+/// Typedef
+typedef struct {
+  float accel_x;
+  float accel_y;
+  float accel_z;
+  float gyro_x;
+  float gyro_y;
+  float gyro_z;
+} IMU_DATA;
+
+/// Global Variable
 /// IMU setting
 // Create a instance of class LSM6DS3
 LSM6DS3 myIMU(I2C_MODE, 0x6A);    //I2C device address 0x6A
@@ -18,7 +30,7 @@ BLEService imuService("aaaa");
 // Bluetooth® Low Energy LED Switch Characteristic - custom 128-bit UUID, read and writable by central
 // Attention: use BLEWriteWithoutResponse instead of BLEWrite (Reference: https://ww2.mathworks.cn/matlabcentral/answers/556798-ble-write-to-arduino-nano-33-ble-is-unsuccessful)
 // BLENotify: remote clients will be able to get notifications if this characteristic changes
-BLEFloatCharacteristic imuCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLECharacteristic imuCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify, sizeof(IMU_DATA));
 
 BLEDescriptor imuDescriptor("2901", "imu");
 
@@ -27,29 +39,21 @@ auto timer = timer_create_default(); // create a timer with default settings
 
 const int ledPin = LED_BUILTIN; // pin to use for the LED
 
-// Global variables
-static float accel_x;
-static float accel_y;
-static float accel_z;
-static float gyro_x;
-static float gyro_y;
-static float gyro_z;
+static IMU_DATA imu_data;
 
 static unsigned int count = 0;
 
 bool timer_callback(void *) {
-  accel_x = myIMU.readFloatAccelX();
-  accel_y = myIMU.readFloatAccelY();
-  accel_z = myIMU.readFloatAccelZ();
-  gyro_x  = myIMU.readFloatGyroX();
-  gyro_y  = myIMU.readFloatGyroY();
-  gyro_z  = myIMU.readFloatGyroZ();
-  imuCharacteristic.writeValue(accel_x);
-  imuCharacteristic.writeValue(accel_y);
-  imuCharacteristic.writeValue(accel_z);
-  imuCharacteristic.writeValue(gyro_x);
-  imuCharacteristic.writeValue(gyro_y);
-  imuCharacteristic.writeValue(gyro_z);
+  // read data
+  imu_data.accel_x = myIMU.readFloatAccelX();
+  imu_data.accel_y = myIMU.readFloatAccelY();
+  imu_data.accel_z = myIMU.readFloatAccelZ();
+  imu_data.gyro_x  = myIMU.readFloatGyroX();
+  imu_data.gyro_y  = myIMU.readFloatGyroY();
+  imu_data.gyro_z  = myIMU.readFloatGyroZ();
+
+  // send data
+  imuCharacteristic.writeValue(&imu_data, sizeof(IMU_DATA));
 
   // print every 1s for debug
   if(count % 100 == 0) {
@@ -57,12 +61,12 @@ bool timer_callback(void *) {
     Serial.print("sequence num:");
     Serial.println(count);
     // 4 means precision, for example, xx.1234
-    Serial.println(accel_x, 4);
-    Serial.println(accel_y, 4);
-    Serial.println(accel_z, 4);
-    Serial.println(gyro_x, 4);
-    Serial.println(gyro_y, 4);
-    Serial.println(gyro_z, 4);
+    Serial.println(imu_data.accel_x, 4);
+    Serial.println(imu_data.accel_y, 4);
+    Serial.println(imu_data.accel_z, 4);
+    Serial.println(imu_data.gyro_x, 4);
+    Serial.println(imu_data.gyro_y, 4);
+    Serial.println(imu_data.gyro_z, 4);
 
     // Toggle LED status every 1 second
     if (count / 100 % 2 == 1) {
