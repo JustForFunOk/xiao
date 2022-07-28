@@ -54,8 +54,18 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
         end
 
         function displayCharacteristicData(app,src)
-            [data,timestamp] = read(src,'oldest');
-            app.RawDataTextArea.Value = string(data);
+            % read data
+            [binary_data,timestamp] = read(src,'oldest');
+
+            % deserialize binary msg
+            accel_x = typecast(uint8(binary_data(1:4)), 'single');
+            accel_y = typecast(uint8(binary_data(5:8)), 'single');
+            accel_z = typecast(uint8(binary_data(9:12)), 'single');
+            gyro_x = typecast(uint8(binary_data(13:16)), 'single');
+            gyro_y = typecast(uint8(binary_data(17:20)), 'single');
+            gyro_z = typecast(uint8(binary_data(21:24)), 'single');
+
+            app.RawDataTextArea.Value = string([accel_x accel_y accel_z gyro_x gyro_y gyro_z]);
 
             % display content in matlab terminal
             % disp(data);
