@@ -8,7 +8,9 @@
 #define IMU_RAW_FREQUENCY_HZ  100
 
 /// Typedef
+// 28 Bytes
 typedef struct {
+  uint32_t sequence_num;
   float accel_x;
   float accel_y;
   float accel_z;
@@ -56,10 +58,10 @@ bool timer_callback(void *) {
   imuCharacteristic.writeValue(&imu_data, sizeof(IMU_DATA));
 
   // print every 1s for debug
-  if(count % 100 == 0) {
+  if(imu_data.sequence_num % 100 == 0) {
     Serial.println("\n---IMU RAW DATA---");
     Serial.print("sequence num:");
-    Serial.println(count);
+    Serial.println(imu_data.sequence_num);
     // 4 means precision, for example, xx.1234
     Serial.println(imu_data.accel_x, 4);
     Serial.println(imu_data.accel_y, 4);
@@ -69,14 +71,14 @@ bool timer_callback(void *) {
     Serial.println(imu_data.gyro_z, 4);
 
     // Toggle LED status every 1 second
-    if (count / 100 % 2 == 1) {
+    if (imu_data.sequence_num / 100 % 2 == 1) {
       digitalWrite(ledPin, LOW); // changed from HIGH to LOW
     } else {
       digitalWrite(ledPin, HIGH); // changed from LOW to HIGH
     }
   }
 
-  count++;
+  imu_data.sequence_num++;
 }
 
 void setup() {
