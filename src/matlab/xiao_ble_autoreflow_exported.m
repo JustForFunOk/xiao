@@ -13,8 +13,8 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
         DropDownLabel         matlab.ui.control.Label
         BLEDeviceDropDown     matlab.ui.control.DropDown
         CenterPanel           matlab.ui.container.Panel
-        UIAxes                matlab.ui.control.UIAxes
-        UIAxes2               matlab.ui.control.UIAxes
+        AccelUIAxes           matlab.ui.control.UIAxes
+        GyroUIAxes            matlab.ui.control.UIAxes
         ParsedPlotLabel       matlab.ui.control.Label
         RightPanel            matlab.ui.container.Panel
         FusedResultLabel      matlab.ui.control.Label
@@ -28,16 +28,33 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
 
 
     properties (Access = private)
-        BLEConnectCheckTimer = 0;
-        isBLEConnectted = false; % BLE connect status
+        % BLE
+        ScanBLEDeviceTimer = 0;
+        % BLE connect status
+        isBLEConnectted = false;
         BLEList = table;
         BLEName = table;
         BLEDevice = 0;
         BLECharacteristic = 0;
+        
+        % IMU
+        % IMUDataFreqHz(100) * IMUDataHistoryS(5)
+        maxBufferSize = 500;
+        % keep last 5s data, 10ms resolution
+        % Sequence number  row:1 col:500 uint32
+        IMUSequenceNumBuffer = [];
+        % IMU Data Buffer  row:6 col:500 float
+        % | accelX  |
+        % | accelY  |
+        % | accelZ  |
+        % | gyroX   |
+        % | gyroY   |
+        % | gyroZ   | 
+        IMUDataBuffer = [];
     end
 
     methods (Access = private)
-        function BLEConnectCheckTimerCallback(app, obj, event)
+        function ScanBLEDeviceTimerCallback(app, obj, event)
             % Scan bluetooth devices
             app.BLEList = blelist;
             % Get the name string array from blelist result
@@ -58,15 +75,51 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             [binary_data,timestamp] = read(src,'oldest');
 
             % deserialize binary msg
-            accel_x = typecast(uint8(binary_data(1:4)), 'single');
-            accel_y = typecast(uint8(binary_data(5:8)), 'single');
-            accel_z = typecast(uint8(binary_data(9:12)), 'single');
-            gyro_x = typecast(uint8(binary_data(13:16)), 'single');
-            gyro_y = typecast(uint8(binary_data(17:20)), 'single');
-            gyro_z = typecast(uint8(binary_data(21:24)), 'single');
+            sequence_num = typecast(uint8(binary_data(1:4)), 'uint32');
+            accel_x = typecast(uint8(binary_data(5:8)), 'single');
+            accel_y = typecast(uint8(binary_data(9:12)), 'single');
+            accel_z = typecast(uint8(binary_data(13:16)), 'single');
+            gyro_x = typecast(uint8(binary_data(17:20)), 'single');
+            gyro_y = typecast(uint8(binary_data(21:24)), 'single');
+            gyro_z = typecast(uint8(binary_data(25:28)), 'single');
+ 
+            % append new data
+            app.IMUSequenceNumBuffer(end+1) = sequence_num;
+            app.IMUDataBuffer(:, end+1) = [accel_x accel_y accel_z gyro_x gyro_y gyro_z];
+ 
+            app.RawDataTextArea.Value = "Sequence num: " + string(sequence_num);
+%             + string([accel_x accel_y accel_z gyro_x gyro_y gyro_z]);
 
-            app.RawDataTextArea.Value = string([accel_x accel_y accel_z gyro_x gyro_y gyro_z]);
+            % draw IMU data plot, every 50ms
+            if(mod(sequence_num, 5) == 0)
+                [~, data_size] = size(app.IMUSequenceNumBuffer);
+                if(data_size > app.maxBufferSize)
+                    % keep last maxBufferSize msg
+                    app.IMUSequenceNumBuffer = app.IMUSequenceNumBuffer(end-app.maxBufferSize+1:end);
+                    app.IMUDataBuffer = app.IMUDataBuffer(:, end-app.maxBufferSize+1:end);
+                end
 
+                % calculate x axis value every time to suit data loss case
+                % use sequence number to calculate relative time
+                plotXAxis = (app.IMUSequenceNumBuffer - app.IMUSequenceNumBuffer(end)) * 0.01;
+
+                % plot accel
+                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(1,:),'-r');
+                hold(app.AccelUIAxes, 'on');
+                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(2,:),'-g');
+                hold(app.AccelUIAxes, 'on');
+                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(3,:),'-b');
+                hold(app.AccelUIAxes, 'off');
+
+                % plot gyro
+                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(4,:),'-r');
+                hold(app.GyroUIAxes, 'on');
+                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(5,:),'-g');
+                hold(app.GyroUIAxes, 'on');
+                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(6,:),'-b');
+                hold(app.GyroUIAxes, 'off');
+            end
+            
             % display content in matlab terminal
             % disp(data);
             % disp(timestamp);
@@ -85,12 +138,12 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             % Config timer
             % Refernce: https://ww2.mathworks.cn/matlabcentral/answers/346703-how-to-use-timer-callback-in-app-designer
             % Refresh BLE device list every 5 seconds
-            app.BLEConnectCheckTimer = timer('Period',5,'ExecutionMode','fixedSpacing',...
+            app.ScanBLEDeviceTimer = timer('Period',5,'ExecutionMode','fixedSpacing',...
                            'TasksToExecute', Inf);
-            app.BLEConnectCheckTimer.TimerFcn = @app.BLEConnectCheckTimerCallback;
+            app.ScanBLEDeviceTimer.TimerFcn = @app.ScanBLEDeviceTimerCallback;
 
             % Start timer
-            start(app.BLEConnectCheckTimer); % stop(app.BLEConnectCheckTimer);
+            start(app.ScanBLEDeviceTimer); % stop(app.ScanBLEDeviceTimer);
         end
 
         % Changes arrangement of the app based on UIFigure width
@@ -134,7 +187,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             choosedDevice = app.BLEDeviceDropDown.Value;
 
             if(choosedDevice == "Arduino" && app.isBLEConnectted == false)
-                stop(app.BLEConnectCheckTimer);
+                stop(app.ScanBLEDeviceTimer);
 
                 app.ConnectStatusLamp.Color = [0 0 1];
 
@@ -158,14 +211,14 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
                 app.isBLEConnectted = false;
                 app.ConnectStatusLamp.Color = [0.5 0.5 0.5];
 
-                start(app.BLEConnectCheckTimer);
+                start(app.ScanBLEDeviceTimer);
             end
         end
 
         % Close request function: UIFigure
         function UIFigureCloseRequest(app, event)
             % Stop timer before close app
-            stop(app.BLEConnectCheckTimer);
+            stop(app.ScanBLEDeviceTimer);
 
             delete(app)
         end
@@ -210,6 +263,7 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             app.ConnectStatusLamp = uilamp(app.LeftPanel);
             app.ConnectStatusLamp.Tooltip = {'BLE connection status.'; 'Gray: No connection.'; 'Blue: Connecting.'; 'Green: Connected.'; 'Red: Disconnecting.'};
             app.ConnectStatusLamp.Position = [180 477 18 18];
+            app.ConnectStatusLamp.Color = [1 1 1];
 
             % Create RawDataTextAreaLabel
             app.RawDataTextAreaLabel = uilabel(app.LeftPanel);
@@ -248,21 +302,26 @@ classdef xiao_ble_autoreflow_exported < matlab.apps.AppBase
             app.CenterPanel.Layout.Row = 1;
             app.CenterPanel.Layout.Column = 2;
 
-            % Create UIAxes
-            app.UIAxes = uiaxes(app.CenterPanel);
-            title(app.UIAxes, 'Title')
-            xlabel(app.UIAxes, 'X')
-            ylabel(app.UIAxes, 'Y')
-            app.UIAxes.TitleFontWeight = 'bold';
-            app.UIAxes.Position = [14 253 300 185];
+            % Create AccelUIAxes
+            app.AccelUIAxes = uiaxes(app.CenterPanel);
+            title(app.AccelUIAxes, 'Accel')
+            xlabel(app.AccelUIAxes, 'time(s)')
+            ylabel(app.AccelUIAxes, 'acc(g)')
+            app.AccelUIAxes.XTick = [-6 -5 -4 -3 -2 -1 0];
+            app.AccelUIAxes.XTickLabel = {'-6'; '-5'; '-4'; '-3'; '-2'; '-1'; '0'};
+            app.AccelUIAxes.TitleFontWeight = 'bold';
+            app.AccelUIAxes.Tag = 'Plot accel realtime data';
+            app.AccelUIAxes.Position = [14 253 300 185];
 
-            % Create UIAxes2
-            app.UIAxes2 = uiaxes(app.CenterPanel);
-            title(app.UIAxes2, 'Title')
-            xlabel(app.UIAxes2, 'X')
-            ylabel(app.UIAxes2, 'Y')
-            app.UIAxes2.TitleFontWeight = 'bold';
-            app.UIAxes2.Position = [14 48 300 185];
+            % Create GyroUIAxes
+            app.GyroUIAxes = uiaxes(app.CenterPanel);
+            title(app.GyroUIAxes, 'Gyro')
+            xlabel(app.GyroUIAxes, 'time(s)')
+            ylabel(app.GyroUIAxes, 'gyro(deg/s?)')
+            app.GyroUIAxes.XTick = [-6 -5 -4 -3 -2 -1 0];
+            app.GyroUIAxes.XTickLabel = {'-6'; '-5'; '-4'; '-3'; '-2'; '-1'; '0'};
+            app.GyroUIAxes.TitleFontWeight = 'bold';
+            app.GyroUIAxes.Position = [14 48 300 185];
 
             % Create ParsedPlotLabel
             app.ParsedPlotLabel = uilabel(app.CenterPanel);
