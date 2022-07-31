@@ -10,6 +10,9 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
         AccelUIAxes          matlab.ui.control.UIAxes
         GyroUIAxes           matlab.ui.control.UIAxes
         SequenceNumberLabel  matlab.ui.control.Label
+        XButton              matlab.ui.control.StateButton
+        YButton              matlab.ui.control.StateButton
+        ZButton              matlab.ui.control.StateButton
     end
 
     
@@ -37,6 +40,11 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
         % | gyroY   |
         % | gyroZ   | 
         IMUDataBuffer = [];
+        
+        % plot
+        drawX = true;
+        drawY = true;
+        drawZ = true;
     end
     
     methods (Access = private)
@@ -94,21 +102,35 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
                 % use sequence number to calculate relative time
                 plotXAxis = (app.IMUSequenceNumBuffer - app.IMUSequenceNumBuffer(end)) * 0.01;
 
-                % plot accel
-                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(1,:),'-r');
-                hold(app.AccelUIAxes, 'on');
-                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(2,:),'-g');
-                hold(app.AccelUIAxes, 'on');
-                plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(3,:),'-b');
+                % plot accel and gyro
+                % 
                 hold(app.AccelUIAxes, 'off');
-
-                % plot gyro
-                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(4,:),'-r');
-                hold(app.GyroUIAxes, 'on');
-                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(5,:),'-g');
-                hold(app.GyroUIAxes, 'on');
-                plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(6,:),'-b');
                 hold(app.GyroUIAxes, 'off');
+                if(app.drawX == true)
+                    plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(1,:),'-r');
+                    hold(app.AccelUIAxes, 'on');
+                    
+                    plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(4,:),'-r');
+                    hold(app.GyroUIAxes, 'on');
+                end
+                if(app.drawY == true)
+                    plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(2,:),'-g');
+                    hold(app.AccelUIAxes, 'on');
+                    
+                    plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(5,:),'-g');
+                    hold(app.GyroUIAxes, 'on');
+                end
+                if(app.drawZ == true)
+                    plot(app.AccelUIAxes, plotXAxis, app.IMUDataBuffer(3,:),'-b');
+                    hold(app.AccelUIAxes, 'on');
+                    
+                    plot(app.GyroUIAxes, plotXAxis, app.IMUDataBuffer(6,:),'-b');
+                    hold(app.GyroUIAxes, 'on');
+                end
+
+                % Add legend will cause plot delay, do not add it
+                % legend(app.AccelUIAxes, 'X', 'Y', 'Z');
+
             end
             
             % display content in matlab terminal
@@ -178,6 +200,24 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
 
             delete(app)
         end
+
+        % Value changed function: XButton
+        function XButtonValueChanged(app, event)
+            value = app.XButton.Value;
+            app.drawX = value;
+        end
+
+        % Value changed function: YButton
+        function YButtonValueChanged(app, event)
+            value = app.YButton.Value;
+            app.drawY = value;
+        end
+
+        % Value changed function: ZButton
+        function ZButtonValueChanged(app, event)
+            value = app.ZButton.Value;
+            app.drawZ = value;
+        end
     end
 
     % Component initialization
@@ -245,6 +285,30 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
             app.SequenceNumberLabel = uilabel(app.UIFigure);
             app.SequenceNumberLabel.Position = [215 482 160 22];
             app.SequenceNumberLabel.Text = 'Sequence Num: ---';
+
+            % Create XButton
+            app.XButton = uibutton(app.UIFigure, 'state');
+            app.XButton.ValueChangedFcn = createCallbackFcn(app, @XButtonValueChanged, true);
+            app.XButton.Text = 'X';
+            app.XButton.FontColor = [1 0 0];
+            app.XButton.Position = [72 13 22 22];
+            app.XButton.Value = true;
+
+            % Create YButton
+            app.YButton = uibutton(app.UIFigure, 'state');
+            app.YButton.ValueChangedFcn = createCallbackFcn(app, @YButtonValueChanged, true);
+            app.YButton.Text = 'Y';
+            app.YButton.FontColor = [0 1 0];
+            app.YButton.Position = [103 13 22 22];
+            app.YButton.Value = true;
+
+            % Create ZButton
+            app.ZButton = uibutton(app.UIFigure, 'state');
+            app.ZButton.ValueChangedFcn = createCallbackFcn(app, @ZButtonValueChanged, true);
+            app.ZButton.Text = 'Z';
+            app.ZButton.FontColor = [0 0 1];
+            app.ZButton.Position = [133.5 13 21 22];
+            app.ZButton.Value = true;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
