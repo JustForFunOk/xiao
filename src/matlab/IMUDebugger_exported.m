@@ -45,6 +45,9 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
         drawX = true;
         drawY = true;
         drawZ = true;
+        
+        % Fuse
+        fuse = imufilter('SampleRate', 10);
     end
     
     methods (Access = private)
@@ -71,13 +74,13 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
 
             % Deserialize binary msg
             sequence_num = typecast(uint8(binary_data(1:4)), 'uint32');
-            accel_x = typecast(uint8(binary_data(5:8)), 'single');
-            accel_y = typecast(uint8(binary_data(9:12)), 'single');
-            accel_z = typecast(uint8(binary_data(13:16)), 'single');
-            gyro_x = typecast(uint8(binary_data(17:20)), 'single');
-            gyro_y = typecast(uint8(binary_data(21:24)), 'single');
-            gyro_z = typecast(uint8(binary_data(25:28)), 'single');
- 
+            accel_x = convacc(typecast(uint8(binary_data(5:8)), 'single'), 'G''s', 'm/s^2');
+            accel_y = convacc(typecast(uint8(binary_data(9:12)), 'single'), 'G''s', 'm/s^2');
+            accel_z = convacc(typecast(uint8(binary_data(13:16)), 'single'), 'G''s', 'm/s^2');
+            gyro_x = deg2rad(typecast(uint8(binary_data(17:20)), 'single'));
+            gyro_y = deg2rad(typecast(uint8(binary_data(21:24)), 'single'));
+            gyro_z = deg2rad(typecast(uint8(binary_data(25:28)), 'single'));
+      
             % Append new data
             app.IMUSequenceNumBuffer(end+1) = sequence_num;
             app.IMUDataBuffer(:, end+1) = [accel_x accel_y accel_z gyro_x gyro_y gyro_z];
@@ -102,8 +105,15 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
                 % use sequence number to calculate relative time
                 plotXAxis = (app.IMUSequenceNumBuffer - app.IMUSequenceNumBuffer(end)) * 0.01;
 
+                % Can't fuse 100Hz data, so down to 10Hz
+                accel = [accel_x accel_y accel_z];
+                gyro = [gyro_x gyro_y gyro_z];
+                q = app.fuse(accel, gyro);
+                pose = eulerd(q,'ZYX','frame');
+                disp(sequence_num);
+                disp(pose);
+                
                 % plot accel and gyro
-                % 
                 hold(app.AccelUIAxes, 'off');
                 hold(app.GyroUIAxes, 'off');
                 if(app.drawX == true)
@@ -264,7 +274,7 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
             app.AccelUIAxes = uiaxes(app.UIFigure);
             title(app.AccelUIAxes, 'Accel')
             xlabel(app.AccelUIAxes, 'time(s)')
-            ylabel(app.AccelUIAxes, 'acc(g)')
+            ylabel(app.AccelUIAxes, 'acc(m/s2)')
             app.AccelUIAxes.XTick = [-6 -5 -4 -3 -2 -1 0];
             app.AccelUIAxes.XTickLabel = {'-6'; '-5'; '-4'; '-3'; '-2'; '-1'; '0'};
             app.AccelUIAxes.TitleFontWeight = 'bold';
@@ -275,7 +285,7 @@ classdef IMUDebugger_exported < matlab.apps.AppBase
             app.GyroUIAxes = uiaxes(app.UIFigure);
             title(app.GyroUIAxes, 'Gyro')
             xlabel(app.GyroUIAxes, 'time(s)')
-            ylabel(app.GyroUIAxes, 'gyro(deg/s?)')
+            ylabel(app.GyroUIAxes, 'gyro(rad/s)')
             app.GyroUIAxes.XTick = [-6 -5 -4 -3 -2 -1 0];
             app.GyroUIAxes.XTickLabel = {'-6'; '-5'; '-4'; '-3'; '-2'; '-1'; '0'};
             app.GyroUIAxes.TitleFontWeight = 'bold';
