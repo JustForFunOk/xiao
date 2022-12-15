@@ -35,12 +35,12 @@
 // 28 Bytes
 typedef struct {
   uint32_t sequence_num;
-  float accel_x;
-  float accel_y;
-  float accel_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
+  float accel_x_g;  // g
+  float accel_y_g;
+  float accel_z_g;
+  float gyro_x_dps;  // degree per second
+  float gyro_y_dps;
+  float gyro_z_dps;
 } IMU_DATA;
 
 /// Global Variable
@@ -105,12 +105,12 @@ void turn_off_blue_led() {
 
 bool timer_callback(void *) {
   // read data
-  imu_data.accel_x = myIMU.readFloatAccelX();
-  imu_data.accel_y = myIMU.readFloatAccelY();
-  imu_data.accel_z = myIMU.readFloatAccelZ();
-  imu_data.gyro_x  = myIMU.readFloatGyroX();
-  imu_data.gyro_y  = myIMU.readFloatGyroY();
-  imu_data.gyro_z  = myIMU.readFloatGyroZ();
+  imu_data.accel_x_g  = myIMU.readFloatAccelX();
+  imu_data.accel_y_g  = myIMU.readFloatAccelY();
+  imu_data.accel_z_g  = myIMU.readFloatAccelZ();
+  imu_data.gyro_x_dps = myIMU.readFloatGyroX();
+  imu_data.gyro_y_dps = myIMU.readFloatGyroY();
+  imu_data.gyro_z_dps = myIMU.readFloatGyroZ();
 
   // send data through BLE
   imuCharacteristic.writeValue(&imu_data, sizeof(IMU_DATA));
@@ -125,12 +125,12 @@ bool timer_callback(void *) {
       Serial.print("sequence num:");
       Serial.println(imu_data.sequence_num);
       // 4 means precision, for example, xx.1234
-      Serial.println(imu_data.accel_x, 4);
-      Serial.println(imu_data.accel_y, 4);
-      Serial.println(imu_data.accel_z, 4);
-      Serial.println(imu_data.gyro_x, 4);
-      Serial.println(imu_data.gyro_y, 4);
-      Serial.println(imu_data.gyro_z, 4);
+      Serial.println(imu_data.accel_x_g, 4);
+      Serial.println(imu_data.accel_y_g, 4);
+      Serial.println(imu_data.accel_z_g, 4);
+      Serial.println(imu_data.gyro_x_dps, 4);
+      Serial.println(imu_data.gyro_y_dps, 4);
+      Serial.println(imu_data.gyro_z_dps, 4);
     } else {
       // turn off green led if serial disconnected
       turn_off_green_led();
