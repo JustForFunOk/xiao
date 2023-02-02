@@ -38,3 +38,14 @@
 ### 3.3 Battery Charger
 
 [1s-charger-bq25100](./datasheet/1s-charger-bq25100.pdf)
+
+---
+
+## 3D Model
+
+For 3D printer.
+* [xiao_bottom](./model_3d/)
+* [xiao_top](./model_3d/)
+
+### Assembly
+![model_3d_assemble](../docs/images/xiao_3d_assemble.png)

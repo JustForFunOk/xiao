@@ -1,9 +1,9 @@
 [submodule "third_party/ArduinoBLE"]
-	path = third_party/ArduinoBLE
+	path = src/arduino/third_party/ArduinoBLE
 	url = https://github.com/arduino-libraries/ArduinoBLE
 [submodule "third_party/IMU"]
-	path = third_party/IMU
+	path = src/arduino/third_party/IMU
 	url = https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3
 [submodule "third_party/arduino-timer"]
-	path = third_party/arduino-timer
+	path = src/arduino/third_party/arduino-timer
 	url = https://github.com/contrem/arduino-timer.git
