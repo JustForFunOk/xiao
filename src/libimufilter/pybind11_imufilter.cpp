@@ -13,7 +13,8 @@ PYBIND11_MODULE(pybind11_imufilter, m) {
   //   std::string ToString() const;
   // };
   py::class_<::filter::Vector3d>(m, "Vector3d")
-      .def(py::init<>())  // C++会默认生成构造函数等，但是这里要显式的声明
+      .def(py::init<>())
+      .def(py::init<double, double, double>())
       .def_readwrite("x", &::filter::Vector3d::x)
       .def_readwrite("y", &::filter::Vector3d::y)
       .def_readwrite("z", &::filter::Vector3d::z)

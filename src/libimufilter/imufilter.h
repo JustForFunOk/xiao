@@ -11,6 +11,9 @@ struct Vector3d {
   double y;
   double z;
 
+  Vector3d() : x(0.0), y(0.0), z(0.0) {}
+  Vector3d(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+
   std::string ToString() const {
     return "(" + std::to_string(x) + ", " + std::to_string(y) + ", " +
            std::to_string(z) + ")\n";
