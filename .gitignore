@@ -1,2 +1,6 @@
 # Macos Finder
 .DS_Store
+
+# binary files
+*.o
+*.so
