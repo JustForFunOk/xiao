@@ -4,13 +4,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import csv
+import os
 
-# filename = open('./raw_imu_data/imu_xyz90_rotation.csv', 'r')
-# filename = open('./raw_imu_data/imu_shaking.csv', 'r')
-# filename = open('./raw_imu_data/imu_high_frequency_vibration.csv', 'r')
-# filename = open('./raw_imu_data/imu_stationary.csv', 'r')
-# filename = open('./raw_imu_data/imu_plane_movement.csv', 'r')
-filename = open('./raw_imu_data/imu_free_fall.csv', 'r')
+current_dir = os.path.dirname(__file__)
+
+# RELATIVE_PATH = 'raw_imu_data/imu_plane_movement.csv'
+# RELATIVE_PATH = 'raw_imu_data/imu_shaking.csv'
+# RELATIVE_PATH = 'raw_imu_data/imu_high_frequency_vibration.csv'
+RELATIVE_PATH = 'raw_imu_data/imu_stationary.csv'
+# RELATIVE_PATH = 'raw_imu_data/imu_plane_movement.csv'
+# RELATIVE_PATH = 'raw_imu_data/imu_free_fall.csv'
+
+full_filename = os.path.join(current_dir, RELATIVE_PATH)
+filename = open(full_filename, mode='r', encoding='utf8')
 
 file = csv.DictReader(filename)
 

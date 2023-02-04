@@ -7,13 +7,13 @@ g++ imufilter.cpp rt_nonfinite.cpp -fPIC -shared  -o libimufilter.so
 
 测试使用动态库
 ``` shell
-g++ main.cpp -L. -limufilter -o imufilter_main
+g++ test_imufilter.cpp -L. -limufilter -o imufilter_main
 ```
 
 编译生成binary并运行
 ``` shell
-g++ main.cpp imufilter.cpp rt_nonfinite.cpp  -std=c++11 -o main.o
-./main.o
+g++ test_imufilter.cpp imufilter.cpp rt_nonfinite.cpp  -std=c++11 -o test_imufilter.o
+./test_imufilter.o
 ```
 结果已验证，和matlab生成的相同
 
@@ -26,6 +26,12 @@ g++ main.cpp imufilter.cpp rt_nonfinite.cpp  -std=c++11 -o main.o
 `rtwtypes.h` `tmwtypes.h` 类型支持（可以优化掉）
 
 `coder_array.h` 不依赖其他数据结构，实现多维数组，里面使用了动态内存，注意嵌入式是否支持
+
+`test_imufilter.cpp` 用来验证核心算法的准确性，matlab输出作为真值
+
+`pybind11_imufilter.cpp` 将C++算法封装成pybind11_imufilter python包
+
+`test_imufilter.py` 测试pybind11_imufilter包
 
 ## pybind
 
