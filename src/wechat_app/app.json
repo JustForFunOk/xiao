@@ -1,7 +1,8 @@
 {
   "pages":[
     "pages/index/index",
-    "pages/logs/logs"
+    "pages/bluetooth/bluetooth",
+    "pages/bluetooth/slave/slave"
   ],
   "window":{
     "backgroundTextStyle":"light",
