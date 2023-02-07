@@ -55,6 +55,7 @@ module.exports.len = function(arr) {
     <view wx:for="{{chs}}" wx:key="index" style="font-size: 12px; margin-top: 10px;">
       <view>特性UUID: {{item.uuid}}</view>
       <view>特性值: {{item.value}}</view>
+      <view>解析值: {{item.parsed}}</view>
     </view>
   </view>
   <!-- <template is="foot" /> -->
