@@ -18,6 +18,41 @@ function ab2hex(buffer) {
   return hexArr.join('')
 }
 
+function ab2ParsedData(buffer) {
+    var parsedData = {
+        seqNum : 0,
+        acc_x : 0.0,
+        acc_y : 0.0,
+        acc_z : 0.0,
+        gyro_x : 0.0,
+        gyro_y : 0.0,
+        gyro_z : 0.0
+    };
+    var uint32Array = new Uint32Array(buffer);
+    parsedData.seqNum = uint32Array[0]
+
+    var float32Array = new Float32Array(buffer);
+    parsedData.acc_x = float32Array[1]
+    parsedData.acc_y = float32Array[2]
+    parsedData.acc_z = float32Array[3]
+    parsedData.gyro_x = float32Array[4]
+    parsedData.gyro_y = float32Array[5]
+    parsedData.gyro_z = float32Array[6]
+
+    // convert to string for debug
+    var str = 'seqNum: ' + parsedData.seqNum 
+     + '\nacc: ' + parsedData.acc_x.toFixed(3) + ' ' 
+                 + parsedData.acc_y.toFixed(3) + ' ' 
+                 + parsedData.acc_z.toFixed(3) + ' '
+    + '\ngyro: ' + parsedData.gyro_x.toFixed(3) + ' '
+                 + parsedData.gyro_y.toFixed(3) + ' '
+                 + parsedData.gyro_z.toFixed(3) + ' ';
+
+    // console.log(JSON.stringify(parsedData));
+    // console.log(str);
+    return str;
+}
+
 Page({
   onShareAppMessage() {
     return {
@@ -26,12 +61,14 @@ Page({
     }
   },
 
+  // 全局变量
   data: {
     theme: 'light',
     devices: [],
     connected: false,
     chs: [],
   },
+
   onUnload() {
     this.closeBluetoothAdapter()
   },
@@ -197,28 +234,36 @@ Page({
         console.error('getBLEDeviceCharacteristics', res)
       }
     })
+
+    // 接收到notify的消息回调函数
     // 操作之前先监听，保证第一时间获取数据
-    wx.onBLECharacteristicValueChange((characteristic) => {
+    wx.onBLECharacteristicValueChange((characteristic) => {  // 箭头函数
       const idx = inArray(this.data.chs, 'uuid', characteristic.characteristicId)
       const data = {}
       if (idx === -1) {
-        data[`chs[${this.data.chs.length}]`] = {
+        data[`chs[${this.data.chs.length}]`] = {  // 这是什么语法？
           uuid: characteristic.characteristicId,
-          value: ab2hex(characteristic.value)
+          value: ab2hex(characteristic.value),
+          parsed: ab2ParsedData(characteristic.value)
         }
       } else {
         data[`chs[${idx}]`] = {
           uuid: characteristic.characteristicId,
-          value: ab2hex(characteristic.value)
+          value: ab2hex(characteristic.value),
+          parsed: ab2ParsedData(characteristic.value)
         }
       }
+      // 显示消息提示框
       wx.showToast({
         title: '收到从机数据',
       })
+
       // data[`chs[${this.data.chs.length}]`] = {
       //   uuid: characteristic.characteristicId,
       //   value: ab2hex(characteristic.value)
       // }
+
+      // 更新数据到前端
       this.setData(data)
     })
   },
