@@ -39,6 +39,12 @@ function ab2ParsedData(buffer) {
     parsedData.gyro_y = float32Array[5]
     parsedData.gyro_z = float32Array[6]
 
+    // store to global for shared with 'cube' page
+    const app = getApp()
+    app.globalData.parsedIMUData.acc_x = float32Array[1]
+    app.globalData.parsedIMUData.acc_y = float32Array[2]
+    app.globalData.parsedIMUData.acc_z = float32Array[3]
+
     // convert to string for debug
     var str = 'seqNum: ' + parsedData.seqNum 
      + '\nacc: ' + parsedData.acc_x.toFixed(3) + ' ' 
@@ -176,6 +182,11 @@ Page({
       canWrite: false,
     })
   },
+  enter3DRenderWidget() {
+    wx.navigateTo({
+      url: '../cube/index',
+    })
+  },
   changeMode() {
     wx.navigateTo({
       url: './slave/slave',
@@ -253,10 +264,11 @@ Page({
           parsed: ab2ParsedData(characteristic.value)
         }
       }
-      // 显示消息提示框
-      wx.showToast({
-        title: '收到从机数据',
-      })
+
+      // 显示消息提示框，会一直悬浮在最前面
+      // wx.showToast({
+      //   title: '收到从机数据',
+      // })
 
       // data[`chs[${this.data.chs.length}]`] = {
       //   uuid: characteristic.characteristicId,
