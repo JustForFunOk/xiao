@@ -43,16 +43,17 @@ Page({
         }
         function render() {
           canvas.requestAnimationFrame(render);
+
+          // calculate mesh oritation from acc
+          const app = getApp()
+          mesh.rotation.x = Math.atan(app.globalData.parsedIMUData.acc_x/app.globalData.parsedIMUData.acc_z)
+          mesh.rotation.y = Math.atan(app.globalData.parsedIMUData.acc_y/app.globalData.parsedIMUData.acc_z)
           // mesh.rotation.x += 0.005;
           // mesh.rotation.y += 0.01;
           controls.update();
           renderer.render(scene, camera);
         }
-
         render()
-
-        
-
       })
   },
   onUnload: function () {

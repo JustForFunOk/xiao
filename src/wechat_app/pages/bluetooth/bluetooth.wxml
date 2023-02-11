@@ -50,6 +50,7 @@ module.exports.len = function(arr) {
       <view class="operation">
       <button wx:if="{{canWrite}}" size="mini" bindtap="writeBLECharacteristicValue">写数据</button>
       <button size="mini" bindtap="closeBLEConnection">断开连接</button>
+      <button size="mini" bindtap="enter3DRenderWidget">3D可视化</button>
       </view>
     </view>
     <view wx:for="{{chs}}" wx:key="index" style="font-size: 12px; margin-top: 10px;">

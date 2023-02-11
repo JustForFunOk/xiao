@@ -14,6 +14,13 @@ App({
     })
   },
   globalData: {
-    userInfo: null
+    userInfo: null,
+
+    // bluetooth和cube页面共享解析后IMU数据
+    parsedIMUData: {
+      acc_x : 0.0,
+      acc_y : 0.0,
+      acc_z : 0.0,
+    },
   }
 })
