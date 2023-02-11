@@ -2,7 +2,8 @@
   "pages":[
     "pages/index/index",
     "pages/bluetooth/bluetooth",
-    "pages/bluetooth/slave/slave"
+    "pages/bluetooth/slave/slave",
+    "pages/cube/index"
   ],
   "window":{
     "backgroundTextStyle":"light",

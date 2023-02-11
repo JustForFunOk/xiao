@@ -15,6 +15,7 @@ Page({
   bindViewTap() {
     wx.navigateTo({
       url: '../bluetooth/bluetooth'
+      // url: '/pages/cube/index'
     })
   },
   onLoad() {
