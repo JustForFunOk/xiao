@@ -14,8 +14,8 @@ Page({
   // 事件处理函数
   bindViewTap() {
     wx.navigateTo({
-      url: '../bluetooth/bluetooth'
-      // url: '/pages/cube/index'
+      // url: '../bluetooth/bluetooth'
+      url: '/pages/cube/index'
     })
   },
   onLoad() {
