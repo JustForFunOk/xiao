@@ -14,102 +14,60 @@ Page({
       .exec((res) => {
         let canvasId = res[0].node._canvasId
         const canvas = THREE.global.registerCanvas(canvasId, res[0].node)
-
         this.setData({ canvasId })
-        // const camera = new THREE.PerspectiveCamera(70, canvas.width / canvas.height, 1, 1000);
-        // camera.position.z = 500;
 
         // scene
         let scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xB3CEFB);
-        scene.fog = new THREE.Fog(scene.background, 1, 100);
-
-        // const scene = new THREE.Scene();
-        // scene.background = new THREE.Color(0xAAAAAA);
 
         // camera
+        // PerspectiveCamera( fov : Number, aspect : Number, near : Number, far : Number )
         let camera = new THREE.PerspectiveCamera(90, canvas.width / canvas.height, 1, 1000);
         camera.position.set(30, 30, 30);  //( , z, )
 
         // render
-        let renderer = new THREE.WebGLRenderer({
-          // alpha: true, 
-          antialias: true
+        var renderer = new THREE.WebGLRenderer({
+          antialias: true  // anti-alias 抗锯齿
         });
+        renderer.physicallyCorrectLights = true;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.setClearColor( 0xcccccc );
         renderer.setSize(canvas.width, canvas.height);
+        renderer.toneMapping = Number(THREE.LinearToneMapping);
+        // 曝光 设置太大会导致模型难以分辨
+        // https://gltf-viewer.donmccurdy.com
+        renderer.toneMappingExposure = 2;
+
+        // 场景背景色
+        scene.background = new THREE.Color(0x444444);
 
         // load 3d model
         const loader = new GLTFLoader();
+        // use Blender to export glb
         loader.load( '/pages/cube/xiao_assemble.glb', function ( gltf ) {
           scene.add( gltf.scene );
-          // 模型Mesh开启阴影
-          gltf.scene.traverse(obj => {
-            if(obj.isMesh) {
-            obj.castShadow = true;
-            obj.receiveShadow = true;
-            // obj.material.emissiveMap = obj.material.map;
-            const color = new THREE.Color(0xffff00);
-            obj.color = color;
-            }
-          })
-          
-          
         }, undefined, function ( error ) {
           console.error( error );
         } );
 
-        // light
+        // 环境光
         // 0xffffff - white light, 0.5 - light intensity
-        let directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        const ambientLight = new THREE.AmbientLight(0xffffff,1);
+        scene.add(ambientLight);
+        // 方向光源
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
         directionalLight.position.set(4, 8, 4);
         scene.add(directionalLight);
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+        directionalLight.position.set(0, -8, 0);
+        scene.add(directionalLight2);
+        // 用于显示光源方向，调试使用
         // let dhelper = new THREE.DirectionalLightHelper(directionalLight, 5, 0xff0000); 
         // scene.add(dhelper);
-        
-        // let hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.4);
-        // hemisphereLight.position.set(4, -8, 4);
-        // scene.add(hemisphereLight);
-        // let hHelper = new THREE.HemisphereLightHelper(hemisphereLight, 5);
-        // scene.add(hHelper);
 
-        // floor
-        let floorGeometry = new THREE.PlaneGeometry(3000, 3000, 1);
-        let floorMaterial = new THREE.MeshPhongMaterial({
-          color: 0x77F28F,  // green
-          shininess: 0,
-          // wireframe: true
-        });
-        let floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -0.5 * Math.PI;
-        floor.position.y = -20;
-        scene.add(floor);
-
-        // shadow
-        // 首先渲染器开启阴影
-        renderer.shadowMap.enabled = true;
-        // 光源开启阴影
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
-        // 地板接受阴影开启
-        floor.receiveShadow = true;
-
-        
         // controls
         const controls = new OrbitControls(camera, renderer.domElement);
-        // controls.enableDamping = true;
-        // controls.dampingFactor = 0.25;
-        // controls.enableZoom = false;
+        controls.enableZoom = false;  // 禁用缩放
         controls.update();
-
-        // const geometry = new THREE.BoxBufferGeometry(250, 100, 200);
-        // const texture = new THREE.TextureLoader().load('./rainbow.jpg');
-        // const material = new THREE.MeshBasicMaterial({ map: texture });
-        // // const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });
-        // const mesh = new THREE.Mesh(geometry, material);
-        // scene.add(mesh);
-
-        // renderer.setPixelRatio(wx.getSystemInfoSync().pixelRatio);
-        // renderer.setSize(canvas.width, canvas.height);
 
         function onWindowResize() {
           camera.aspect = window.innerWidth / window.innerHeight;
@@ -124,8 +82,8 @@ Page({
           // mesh.rotation.z = -1 * Math.atan(app.globalData.parsedIMUData.acc_x/app.globalData.parsedIMUData.acc_z)
           // mesh.rotation.x = -1 * Math.atan(app.globalData.parsedIMUData.acc_y/app.globalData.parsedIMUData.acc_z)
 
-          // mesh.rotation.x += 0.005;
-          // mesh.rotation.y += 0.01;
+          // gltf.rotation.x += 0.005;
+          // gltf.rotation.y += 0.01;
           controls.update();
           renderer.render(scene, camera);
         }
