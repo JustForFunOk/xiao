@@ -1,5 +1,7 @@
 import * as THREE from '../../libs/three.weapp.js'
-import { OrbitControls } from '../../jsm/controls/OrbitControls'
+import { OrbitControls } from '../../jsm/controls/OrbitControls.js'
+import gLTF from '../../jsm/loaders/GLTFLoader.js'
+let GLTFLoader = gLTF(THREE)
 
 Page({
   data: {
@@ -12,30 +14,61 @@ Page({
       .exec((res) => {
         let canvasId = res[0].node._canvasId
         const canvas = THREE.global.registerCanvas(canvasId, res[0].node)
-        
         this.setData({ canvasId })
-        const camera = new THREE.PerspectiveCamera(70, canvas.width / canvas.height, 1, 1000);
-        camera.position.z = 500;
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xAAAAAA);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        // scene
+        let scene = new THREE.Scene();
+
+        // camera
+        // PerspectiveCamera( fov : Number, aspect : Number, near : Number, far : Number )
+        let camera = new THREE.PerspectiveCamera(90, canvas.width / canvas.height, 1, 1000);
+        camera.position.set(30, 30, 30);  //( , z, )
+
+        // render
+        var renderer = new THREE.WebGLRenderer({
+          antialias: true  // anti-alias 抗锯齿
+        });
+        renderer.physicallyCorrectLights = true;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.setClearColor( 0xcccccc );
+        renderer.setSize(canvas.width, canvas.height);
+        renderer.toneMapping = Number(THREE.LinearToneMapping);
+        // 曝光 设置太大会导致模型难以分辨
+        // https://gltf-viewer.donmccurdy.com
+        renderer.toneMappingExposure = 2;
+
+        // 场景背景色
+        scene.background = new THREE.Color(0x444444);
+
+        // load 3d model
+        const loader = new GLTFLoader();
+        // use Blender to export glb
+        loader.load( '/pages/cube/xiao_assemble.glb', function ( gltf ) {
+          scene.add( gltf.scene );
+        }, undefined, function ( error ) {
+          console.error( error );
+        } );
+
+        // 环境光
+        // 0xffffff - white light, 0.5 - light intensity
+        const ambientLight = new THREE.AmbientLight(0xffffff,1);
+        scene.add(ambientLight);
+        // 方向光源
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        directionalLight.position.set(4, 8, 4);
+        scene.add(directionalLight);
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+        directionalLight.position.set(0, -8, 0);
+        scene.add(directionalLight2);
+        // 用于显示光源方向，调试使用
+        // let dhelper = new THREE.DirectionalLightHelper(directionalLight, 5, 0xff0000); 
+        // scene.add(dhelper);
+
+        // controls
         const controls = new OrbitControls(camera, renderer.domElement);
-        // controls.enableDamping = true;
-        // controls.dampingFactor = 0.25;
-        // controls.enableZoom = false;
-        camera.position.set(200, 200, 500);
+        controls.enableZoom = false;  // 禁用缩放
         controls.update();
-        const geometry = new THREE.BoxBufferGeometry(250, 100, 200);
-      
-        const texture = new THREE.TextureLoader().load('./rainbow.jpg');
-        const material = new THREE.MeshBasicMaterial({ map: texture });
-      
-        // const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-        // renderer.setPixelRatio(wx.getSystemInfoSync().pixelRatio);
-        // renderer.setSize(canvas.width, canvas.height);
-      
+
         function onWindowResize() {
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
@@ -45,11 +78,12 @@ Page({
           canvas.requestAnimationFrame(render);
 
           // calculate mesh oritation from acc
-          const app = getApp()
-          mesh.rotation.x = Math.atan(app.globalData.parsedIMUData.acc_x/app.globalData.parsedIMUData.acc_z)
-          mesh.rotation.y = Math.atan(app.globalData.parsedIMUData.acc_y/app.globalData.parsedIMUData.acc_z)
-          // mesh.rotation.x += 0.005;
-          // mesh.rotation.y += 0.01;
+          // const app = getApp()
+          // mesh.rotation.z = -1 * Math.atan(app.globalData.parsedIMUData.acc_x/app.globalData.parsedIMUData.acc_z)
+          // mesh.rotation.x = -1 * Math.atan(app.globalData.parsedIMUData.acc_y/app.globalData.parsedIMUData.acc_z)
+
+          // gltf.rotation.x += 0.005;
+          // gltf.rotation.y += 0.01;
           controls.update();
           renderer.render(scene, camera);
         }
